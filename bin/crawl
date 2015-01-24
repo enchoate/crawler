@@ -1,0 +1,102 @@
+#!/bin/bash
+
+PROG_NAME=${0:-crawl}
+
+function usage() {
+   cat << END > /dev/stderr
+Usage:
+  ${PROG_NAME} <URL> <DELAY> [RANDOM MAX]
+  
+Options:
+  URL   - the web address of the page you wish to retrieve
+  DELAY - the number of seconds you wish to wait before retrieval
+  RANDOM MAX - optional random second delay (range 1-MAX)
+   
+Example:
+  ${PROG_NAME} http://www.yahoo.com 10 20"
+END
+}
+
+function check_openssl() {
+   echo "Hi" | openssl enc -base64 2> /dev/null > /dev/null 
+   return $?
+}
+
+function check_curl(){
+   curl -h 2> /dev/null > /dev/null
+   return $?
+}
+
+function exit_on_error() {
+   echo $1 > /dev/stderr
+   exit 1
+}
+
+########
+# main #
+########
+
+# Check for program dependencies
+check_openssl || exit_on_error "$PROG_NAME ERROR: Please install openssl"
+check_curl    || exit_on_error "$PROG_NAME ERROR: Please install curl"
+
+if [ $# -eq 0 ]; then
+   while read line
+   do
+      url=`echo $line | cut -f1 -d' '`
+      del=`echo $line | cut -f2 -d' '`
+      mod=`echo $line | cut -f3 -d' '`
+
+      ./$0 $url $del $mod
+   done
+   exit $?
+fi
+
+# Check for proper usage
+if [ $# -lt 2 -o $# -gt  3 ]; then
+   usage
+   exit 1
+fi
+
+# Variables
+TRACE_FILE=`mktemp --tmpdir=/var/run/crawl --suffix=.txt error_trace_XXXX`
+URL=$1
+DELAY=$2
+MODULO=${3:-1}
+
+# Calculated Variable
+random_sec=$RANDOM
+let "random_sec %= $MODULO"
+
+# Wait before retrieving the URL
+sleep $(( $DELAY + $random_sec ))
+
+# Retrieve the URL
+PAGE=`curl --compressed      \
+           --silent          \
+           --trace-ascii  $TRACE_FILE \
+           --trace-time      \
+           --globoff         \
+           --max-redirs    3 \
+           --max-time     20 \
+           --retry         3 \
+           --retry-delay  $DELAY \
+           --show-error      \
+           --include         \
+           --location        \
+           "$URL"` 
+RETURN_CODE=$?
+if [ $RETURN_CODE -ne 0 ]; then
+   PAGE=`cat $TRACE_FILE`
+fi
+
+# Cleanup
+rm $TRACE_FILE
+
+# Post-process the data
+PAGE=`echo $PAGE | openssl enc -base64 | tr -d "\n  "`
+
+# Emit the record
+echo "${URL}	${PAGE}"
+
+exit $RETURN_CODE
