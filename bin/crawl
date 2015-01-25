@@ -43,10 +43,20 @@ check_curl    || exit_on_error "$PROG_NAME ERROR: Please install curl"
 if [ $# -eq 0 ]; then
    while read line
    do
+      N=`echo $line | awk '{print NF}'`
       url=`echo $line | cut -f1 -d' '`
-      del=`echo $line | cut -f2 -d' '`
-      mod=`echo $line | cut -f3 -d' '`
 
+      del=0
+      mod=1
+
+      if [ $N -eq 2 ]; then
+         del=`echo $line | cut -f2 -d' '`
+      elif [ $N -eq 3 ]; then
+         del=`echo $line | cut -f2 -d' '`
+         mod=`echo $line | cut -f3 -d' '`
+      fi
+
+      echo "$0 $url $del $mod"
       $0 $url $del $mod
    done
    exit $?
