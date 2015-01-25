@@ -74,7 +74,7 @@ sleep $(( $DELAY + $random_sec ))
 # Retrieve the URL
 PAGE=`curl --compressed      \
            --silent          \
-           --trace-ascii  $TRACE_FILE \
+           --trace-ascii  "${TRACE_FILE}" \
            --trace-time      \
            --globoff         \
            --max-redirs    3 \
