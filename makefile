@@ -1,16 +1,16 @@
-VERSION=0.1
+VERSION=0.2
 CRAWL=crawl-${VERSION}
 DESTDIR=/usr/local/bin
 
 install:
-	install -m 755 -o root -p bin/crawl $(DESTDIR)
+	sudo ./install.sh
 
 uninstall:
-	rm -rf $(DESTDIR)/crawl
+	sudo ./uninstall.sh
 
 dist:
 	mkdir -p dist build/$(CRAWL)/bin
-	cp -R bin install.sh build/$(CRAWL)
+	cp -R bin install.sh uninstall.sh build/$(CRAWL)
 	tar Ccjf build dist/$(CRAWL).tar.bz2 $(CRAWL)
 
 clean:
