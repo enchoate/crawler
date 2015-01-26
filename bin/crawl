@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PROG_NAME=${0:-crawl}
+DEFAULT_DELAY=2
 
 function usage() {
    cat << END > /dev/stderr
@@ -46,7 +47,7 @@ if [ $# -eq 0 ]; then
       N=`echo $line | awk '{print NF}'`
       url=`echo $line | cut -f1 -d' '`
 
-      del=0
+      del=$DEFAULT_DELAY
       mod=1
 
       if [ $N -eq 2 ]; then
@@ -56,8 +57,7 @@ if [ $# -eq 0 ]; then
          mod=`echo $line | cut -f3 -d' '`
       fi
 
-      echo "$0 $url $del $mod"
-      $0 $url $del $mod
+      $0 $url $DEFAULT_DELAY $mod
    done
    exit $?
 fi
